@@ -1,8 +1,12 @@
 package com.projecteventapi.event_api.controllers;
 
-import com.projecteventapi.event_api.dto.SubscriptionDto;
+import com.projecteventapi.event_api.dto.ErrorMessage;
+import com.projecteventapi.event_api.dto.SubscriptionResponse;
 import com.projecteventapi.event_api.dto.UserDto;
 import com.projecteventapi.event_api.services.SubscriptionService;
+import com.projecteventapi.event_api.services.exceptions.EventNotFoundException;
+import com.projecteventapi.event_api.services.exceptions.SubscriptionConflictException;
+import com.projecteventapi.event_api.services.exceptions.UserIndicatorNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,15 +19,20 @@ public class SubscriptionController {
     private SubscriptionService subscriptionService;
 
     @PostMapping("/{prettyName}")
-    public ResponseEntity<SubscriptionDto> createSubscription(@PathVariable String prettyName, @RequestBody UserDto subscriber ) {
-        SubscriptionDto subs = subscriptionService.createNewSubscription(prettyName, subscriber);
+    public ResponseEntity<?> createSubscription(@PathVariable String prettyName, @RequestBody UserDto subscriber) {
 
-        if( subs == null ) {
-            return ResponseEntity.badRequest().build();
+        try {
+            SubscriptionResponse response = subscriptionService.createNewSubscription(prettyName, subscriber);
+            if (response != null){
+                return ResponseEntity.ok(response);
+            }
+
+        } catch (EventNotFoundException | UserIndicatorNotFoundException e){
+            return ResponseEntity.status(404).body(new ErrorMessage(e.getMessage()));
+
+        } catch (SubscriptionConflictException e){
+            return ResponseEntity.status(409).body(new ErrorMessage(e.getMessage()));
         }
-        return ResponseEntity.ok(subs);
-
-
-
+        return ResponseEntity.badRequest().build();
     }
 }

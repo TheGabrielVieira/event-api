@@ -1,6 +1,7 @@
 package com.projecteventapi.event_api.services;
 
-import com.projecteventapi.event_api.dto.SubscriptionDto;
+
+import com.projecteventapi.event_api.dto.SubscriptionResponse;
 import com.projecteventapi.event_api.dto.UserDto;
 import com.projecteventapi.event_api.entities.Event;
 import com.projecteventapi.event_api.entities.Subscription;
@@ -9,8 +10,11 @@ import com.projecteventapi.event_api.repositories.EventRepository;
 import com.projecteventapi.event_api.repositories.SubscriptionRepository;
 import com.projecteventapi.event_api.repositories.UserRepository;
 import com.projecteventapi.event_api.services.exceptions.EventNotFoundException;
+import com.projecteventapi.event_api.services.exceptions.SubscriptionConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class SubscriptionService {
@@ -24,12 +28,17 @@ public class SubscriptionService {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionDto createNewSubscription(String eventName, UserDto subs) {
+    public SubscriptionResponse createNewSubscription(String eventName, UserDto subs) {
 
         User user = new User();
         user.setUserName(subs.getUserName());
         user.setUserEmail(subs.getUserEmail());
-        user = userRepository.save(user);
+
+        List<User> users = userRepository.findByUserEmail(user.getUserEmail());
+
+        if(users.isEmpty()){
+            user = userRepository.save(user);
+        }
 
         Event event = eventRepository.findByPrettyName(eventName);
 
@@ -40,8 +49,17 @@ public class SubscriptionService {
         Subscription subscription = new Subscription();
         subscription.setEvent(event);
         subscription.setSubscriber(user);
+
+        Subscription tmpSubscription = subscriptionRepository.findByEventAndSubscriber(event, user);
+        if (tmpSubscription != null) {
+            throw new SubscriptionConflictException("Subscription already exists for user " + user.getUserName() + " in event " + eventName);
+        }
+
         subscription = subscriptionRepository.save(subscription);
 
-        return new SubscriptionDto(subscription);
+        String link = "https://eventlorem.com/" + subscription.getEvent().getPrettyName() + "/" + subscription.getSubscriber().getUserID();
+
+        return new SubscriptionResponse(subscription.getSubscriptionNumber(), link);
+
     }
 }
