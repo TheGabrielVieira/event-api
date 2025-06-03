@@ -33,19 +33,21 @@ public class SubscriptionService {
     @Transactional
     public SubscriptionResponse createNewSubscription(String eventName, UserDto subs, Integer userID) {
 
-        User user = new User();
-        user.setUserName(subs.getUserName());
-        user.setUserEmail(subs.getUserEmail());
+        User user = userRepository.findByUserEmail(subs.getUserEmail());
 
-        List<User> users = userRepository.findByUserEmail(user.getUserEmail());
-
-        if(users.isEmpty()){
+        if (user == null){
+            user = new User();
+            user.setUserName(subs.getUserName());
+            user.setUserEmail(subs.getUserEmail());
             user = userRepository.save(user);
         }
 
-        User indicator = userRepository.findById(userID).orElse(null);
-        if (indicator == null) {
-            throw new UserIndicatorNotFoundException("User " + userID + " not found");
+        User indicator = null;
+        if (userID != null) {
+            indicator = userRepository.findById(userID).orElse(null);
+            if (indicator == null){
+                throw new UserIndicatorNotFoundException("User " + userID + " not found");
+            }
         }
 
         Event event = eventRepository.findByPrettyName(eventName);
