@@ -1,6 +1,7 @@
 package com.projecteventapi.event_api.services;
 
 
+import com.projecteventapi.event_api.dto.SubscriptionRankingItem;
 import com.projecteventapi.event_api.dto.SubscriptionResponse;
 import com.projecteventapi.event_api.dto.UserDto;
 import com.projecteventapi.event_api.entities.Event;
@@ -71,5 +72,14 @@ public class SubscriptionService {
 
         return new SubscriptionResponse(subscription.getSubscriptionNumber(), link);
 
+    }
+
+    public List<SubscriptionRankingItem> getCompleteRanking(String prettyName){
+        Event event = eventRepository.findByPrettyName(prettyName);
+        if (event == null){
+            throw new EventNotFoundException("Event " + prettyName + " not found");
+
+        }
+        return subscriptionRepository.generateRanking(event.getEventId());
     }
 }
