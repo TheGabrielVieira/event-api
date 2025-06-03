@@ -11,8 +11,10 @@ import com.projecteventapi.event_api.repositories.SubscriptionRepository;
 import com.projecteventapi.event_api.repositories.UserRepository;
 import com.projecteventapi.event_api.services.exceptions.EventNotFoundException;
 import com.projecteventapi.event_api.services.exceptions.SubscriptionConflictException;
+import com.projecteventapi.event_api.services.exceptions.UserIndicatorNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,7 +30,8 @@ public class SubscriptionService {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
-    public SubscriptionResponse createNewSubscription(String eventName, UserDto subs) {
+    @Transactional
+    public SubscriptionResponse createNewSubscription(String eventName, UserDto subs, Integer userID) {
 
         User user = new User();
         user.setUserName(subs.getUserName());
@@ -40,8 +43,12 @@ public class SubscriptionService {
             user = userRepository.save(user);
         }
 
-        Event event = eventRepository.findByPrettyName(eventName);
+        User indicator = userRepository.findById(userID).orElse(null);
+        if (indicator == null) {
+            throw new UserIndicatorNotFoundException("User " + userID + " not found");
+        }
 
+        Event event = eventRepository.findByPrettyName(eventName);
         if (event == null) {
             throw new EventNotFoundException("Event " + eventName + " not found");
         }
@@ -49,6 +56,7 @@ public class SubscriptionService {
         Subscription subscription = new Subscription();
         subscription.setEvent(event);
         subscription.setSubscriber(user);
+        subscription.setIndication(indicator);
 
         Subscription tmpSubscription = subscriptionRepository.findByEventAndSubscriber(event, user);
         if (tmpSubscription != null) {

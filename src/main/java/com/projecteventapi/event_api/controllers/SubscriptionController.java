@@ -18,11 +18,11 @@ public class SubscriptionController {
     @Autowired
     private SubscriptionService subscriptionService;
 
-    @PostMapping("/{prettyName}")
-    public ResponseEntity<?> createSubscription(@PathVariable String prettyName, @RequestBody UserDto subscriber) {
+    @PostMapping({"/{prettyName}", "/{prettyName}/{userId}"})
+    public ResponseEntity<?> createSubscription(@PathVariable String prettyName, @RequestBody UserDto subscriber, @PathVariable(required = false) Integer userID) {
 
         try {
-            SubscriptionResponse response = subscriptionService.createNewSubscription(prettyName, subscriber);
+            SubscriptionResponse response = subscriptionService.createNewSubscription(prettyName, subscriber, userID);
             if (response != null){
                 return ResponseEntity.ok(response);
             }

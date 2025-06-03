@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface SubscriptionRepository extends CrudRepository<Subscription, Integer> {
-    public Subscription findByEventAndSubscriber(Event event, User user);
+    Subscription findByEventAndSubscriber(Event event, User user);
 
     @Query(value = "SELECT user_name, count(subscription_number) AS quantidade, indication_user_id" +
             " FROM db_events.tbl_subscription" +
@@ -21,5 +21,5 @@ public interface SubscriptionRepository extends CrudRepository<Subscription, Int
             " AND event_id = :eventId" +
             " GROUP BY indication_user_id" +
             " ORDER BY quantidade DESC;", nativeQuery = true)
-    public List<SubscriptionRankingItem> generateRanking(@Param("eventId") Integer eventId);
+    List<SubscriptionRankingItem> generateRanking(@Param("eventId") Integer eventId);
 }
