@@ -3,6 +3,7 @@ package com.projecteventapi.event_api.services;
 import com.projecteventapi.event_api.dto.EventDto;
 import com.projecteventapi.event_api.entities.Event;
 import com.projecteventapi.event_api.repositories.EventRepository;
+import com.projecteventapi.event_api.services.exceptions.EventNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,9 @@ public class EventService {
 
     public EventDto getEventByPrettyName(String prettyName) {
         Event event = eventRepository.findByPrettyName(prettyName);
+        if (event == null) {
+            throw new EventNotFoundException("Event: " + prettyName + " not found!");
+        }
         return new EventDto(event);
     }
 
