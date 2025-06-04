@@ -48,4 +48,13 @@ public class SubscriptionController {
             return ResponseEntity.status(404).body(new ErrorMessage(e.getMessage()));
         }
     }
+
+    @GetMapping("/{prettyName}/ranking/{userId}")
+    public ResponseEntity<?> generateRankingByUserAndEvent(@PathVariable String prettyName, Integer userId){
+        try {
+            return ResponseEntity.ok(subscriptionService.getRankingByUser(prettyName, userId));
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body((new ErrorMessage(e.getMessage())));
+        }
+    }
 }

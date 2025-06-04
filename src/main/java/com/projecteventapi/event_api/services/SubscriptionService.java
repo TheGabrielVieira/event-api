@@ -1,6 +1,7 @@
 package com.projecteventapi.event_api.services;
 
 
+import com.projecteventapi.event_api.dto.SubscriptionRankingByUser;
 import com.projecteventapi.event_api.dto.SubscriptionRankingItem;
 import com.projecteventapi.event_api.dto.SubscriptionResponse;
 import com.projecteventapi.event_api.dto.UserDto;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 public class SubscriptionService {
@@ -32,7 +34,7 @@ public class SubscriptionService {
     private SubscriptionRepository subscriptionRepository;
 
     @Transactional
-    public SubscriptionResponse createNewSubscription(String eventName, UserDto subs, Integer userID) {
+    public SubscriptionResponse createNewSubscription(String eventName, UserDto subs, Integer userId) {
 
         User user = userRepository.findByUserEmail(subs.getUserEmail());
 
@@ -44,10 +46,10 @@ public class SubscriptionService {
         }
 
         User indicator = null;
-        if (userID != null) {
-            indicator = userRepository.findById(userID).orElse(null);
+        if (userId != null) {
+            indicator = userRepository.findById(userId).orElse(null);
             if (indicator == null){
-                throw new UserIndicatorNotFoundException("User " + userID + " not found");
+                throw new UserIndicatorNotFoundException("User " + userId + " not found");
             }
         }
 
@@ -81,5 +83,17 @@ public class SubscriptionService {
 
         }
         return subscriptionRepository.generateRanking(event.getEventId());
+    }
+
+    public SubscriptionRankingByUser getRankingByUser(String prettyName, Integer userId){
+        List<SubscriptionRankingItem> ranking = getCompleteRanking(prettyName);
+        SubscriptionRankingItem item = ranking.stream().filter(id -> id.userID().equals(userId)).findFirst().orElse(null);
+        if (item == null) {
+            throw new UserIndicatorNotFoundException("There are no registrations with indication of the use " + userId);
+        }
+
+        int position = IntStream.range(0, ranking.size()).filter(pos -> ranking.get(pos).userID().equals(userId)).findFirst().getAsInt();
+
+        return new SubscriptionRankingByUser(item, position+1);
     }
 }
